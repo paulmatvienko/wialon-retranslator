@@ -61,8 +61,7 @@ module.exports = class Service {
         }
       }
 
-      // На каждый входящий корректный пакет по протоколу Wialon Retranslator
-      // надо отправлять: 0x11
+      // To each valid incoming packet, Wialon sends 0x11 as a response.
       socket.write(Buffer.from([0x11]));
     }
 

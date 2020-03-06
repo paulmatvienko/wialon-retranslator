@@ -4,27 +4,25 @@ module.exports = class Parser {
   }
 
   buffer(buffer) {
-    // Валидация
     if (buffer.length < 4) {
       return { data: buffer };
     }
 
     let offset = 0;
-    // Размер всего пакета без учёта текущего поля. Размер 4 байт.
+    // The size of the entire package, excluding the current field . Size 4 bytes.
     let packetSize = buffer.readUInt32LE(offset);
     offset += 4;
 
-    // Валидация
     if ((buffer.length - offset) < packetSize) {
       return { data: buffer };
     }
 
-    // Сообщение
+    // Message
     let messageBuffer = buffer.slice(offset, offset + packetSize);
-    // Подструктура, которая содержит блоки данных.
+    // A substructure that contains data blocks.
     let data = buffer.slice(offset + packetSize);
 
-    // Распаршенное сообщение
+    // Decoded message
     let message = this.message(messageBuffer);
 
     return {
@@ -37,13 +35,13 @@ module.exports = class Parser {
     let message = {};
     let offset = 0;
 
-    // Информация о идентификаторе водителя.
+    // Information about the identity of the driver.
     let controllerIdEnd = buffer.indexOf(0x00, offset);
     let controllerIdBuf = buffer.slice(offset, controllerIdEnd);
     // UID
     let controllerId = controllerIdBuf.toString();
     offset = controllerIdEnd + 1;
-    // Время
+    // Time
     let timestamp = buffer.readUInt32BE(offset);
     let time = this.timestamp(timestamp);
     offset += 4;
@@ -51,21 +49,20 @@ module.exports = class Parser {
     let data = buffer.readUInt32BE(offset);
     offset += 4;
 
-    // Флаги данных
     if (!this.simpleData) {
-      // Информация о местоположении.
+      // Location information.
       message.posInfo = Boolean(data & 0x01);
-      // Информация о цифровых входах.
+      // Information about digital inputs.
       message.digInputInfo = Boolean(data & 0x02);
-      // Информация о цифровых выходах.
+      // Information about digital outputs.
       message.digOutInfo = Boolean(data & 0x04);
-      // Бит тревоги.
+      // Alarm bit
       message.alarm = Boolean(data & 0x10);
-      // Информация о идентификаторе водителя.
+      // Driver ID
       message.driversIdInfo = Boolean(data & 0x20);
-      // Данные
+      // Data
       message.data = this.messageData(buffer.slice(offset));
-      // Время
+      // Time
       message.time = time;
       // UID
       message.controllerId = controllerId;
@@ -168,7 +165,7 @@ module.exports = class Parser {
   }
 
   timestamp(timestamp) {
-    // Секунды в милисекунды
+    // Seconds to miliseconds
     return new Date(timestamp * 1000);
   }
 
@@ -177,7 +174,6 @@ module.exports = class Parser {
       throw new Error('Text must end with 0x00');
     }
 
-    // Убираем символ 0x00
     let textBuffer = buffer.slice(0, buffer.length - 1);
 
     return textBuffer.toString();
@@ -191,22 +187,22 @@ module.exports = class Parser {
     let offset = 0;
     let posInfo = {};
 
-    // Double, 8 bytes, Знаковое дробное число.
+    // Double, 8 bytes
     posInfo.lon = buffer.readDoubleLE(offset);
     offset += 8;
-    // Double, 8 bytes, Знаковое дробное число.
+    // Double, 8 bytes
     posInfo.lat = buffer.readDoubleLE(offset);
     offset += 8;
-    // Double, 8 bytes, Знаковое дробное число.
+    // Double, 8 bytes
     posInfo.height = buffer.readDoubleLE(offset);
     offset += 8;
-    // Short, 2 bytes, Беззнаковое целое.
+    // Short, 2 bytes
     posInfo.speed = buffer.readInt16BE(offset);
     offset += 2;
-    // Short, 2 bytes, Беззнаковое целое.
+    // Short, 2 bytes
     posInfo.course = buffer.readInt16BE(offset);
     offset += 2;
-    // Byte, 1 byte, Беззнаковое целое.
+    // Byte, 1 byte
     posInfo.satelites = buffer.readUInt8(offset);
     offset += 1;
 
